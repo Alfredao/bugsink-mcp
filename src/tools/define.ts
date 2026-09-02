@@ -1,7 +1,7 @@
 import type { z, ZodRawShape } from "zod";
 import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { BugsinkClient } from "../api.js";
+import { BugsinkApiError, type BugsinkClient } from "../api.js";
 
 /** Everything a tool handler is allowed to reach. Grows here, never per tool. */
 export interface ToolContext {
@@ -53,6 +53,24 @@ export function render(output: ToolOutput): CallToolResult {
   return { content: [{ type: "text", text }] };
 }
 
+/**
+ * The single place a failure becomes a tool result.
+ *
+ * A STATE REFUSAL is an answer, not an error: "issue is already resolved" means
+ * the caller's goal is already true, and flagging it with `isError` makes an
+ * agent retry or escalate something that needs neither. Everything else — no
+ * access, missing issue, the instance being down — is an error, because the
+ * agent cannot resolve it by rephrasing the call.
+ */
+export function renderError(error: unknown): CallToolResult {
+  if (error instanceof BugsinkApiError) {
+    if (error.isStateRefusal) return render(`Bugsink declined: ${error.detail}`);
+    return { ...render(`Bugsink error ${error.status}: ${error.detail}`), isError: true };
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  return { ...render(`bugsink-mcp failed: ${message}`), isError: true };
+}
+
 export function registerTools(server: McpServer, tools: AnyToolDefinition[], ctx: ToolContext): void {
   for (const tool of tools) {
     server.registerTool(
@@ -62,7 +80,13 @@ export function registerTools(server: McpServer, tools: AnyToolDefinition[], ctx
         inputSchema: tool.inputSchema,
         ...(tool.annotations ? { annotations: tool.annotations } : {}),
       },
-      async (input: unknown) => render(await tool.handler(input as never, ctx)),
+      async (input: unknown) => {
+        try {
+          return render(await tool.handler(input as never, ctx));
+        } catch (error) {
+          return renderError(error);
+        }
+      },
     );
   }
 }
