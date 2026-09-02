@@ -1,4 +1,4 @@
-import type { Issue, Paginated, Project } from "./types.js";
+import type { Issue, IssueComment, Paginated, Project } from "./types.js";
 
 /** An error answer from Bugsink, carrying the status so callers can branch on it. */
 export class BugsinkApiError extends Error {
@@ -102,6 +102,14 @@ export class BugsinkClient {
     if (params.order) qs.set("order", params.order);
     if (params.cursor) qs.set("cursor", params.cursor);
     return this.request(`/issues/?${qs}`);
+  }
+
+  getIssue(issue: string): Promise<Issue> {
+    return this.request(`/issues/${encodeURIComponent(issue)}/`);
+  }
+
+  addIssueComment(issue: string, comment: string): Promise<IssueComment> {
+    return this.request("/issue-comments/", { method: "POST", body: { issue, comment } });
   }
 
   /** `issue` is the UUID or the friendly id (PROJECT-1234); `action` is a path segment. */
