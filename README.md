@@ -68,6 +68,7 @@ error, because the agent cannot fix it by rephrasing the call.
 | --- | --- |
 | `test_connection` | check URL + token, list visible projects |
 | `list_projects` | resolve a project name to its numeric id |
+| `survey_issues` | **start here**: what is active in a window, by state, biggest first |
 | `list_issues` | issues of one project, sortable, cursor-paginated |
 | `get_issue` | one issue: state, counts, first and last seen |
 | `resolve_issue` | mark resolved |
@@ -78,6 +79,9 @@ error, because the agent cannot fix it by rephrasing the call.
 | `mute_issue_until` | mute until a volume threshold |
 | `unmute_issue` | unmute |
 | `add_issue_comment` | annotate an issue's history |
+| `get_latest_event` | the newest occurrence of an issue, summarised — the usual way in |
+| `list_events` | occurrences of one issue, newest first |
+| `get_event` | one occurrence: failure, location, our frames, rendered stacktrace |
 
 ## Endpoints (canonical API 0)
 
@@ -104,6 +108,27 @@ UUID or the friendly id (`PROJECT-1234`). `reopen/` exists in current Bugsink bu
 Two things the HTTP layer has to get right, both already handled in `api()`: a
 `DELETE` answers `204` with no body and must not go through `res.json()`, and a
 bodyless `POST` needs an explicit `Content-Length: 0`.
+
+### What the list endpoints do not do
+
+Measured against a live instance, and the reason `survey_issues` exists:
+
+- **Unknown query params are ignored, silently.** `is_resolved=false`,
+  `state=unresolved` and `q=is:unresolved` each returned the same unfiltered
+  first page, with a `200`. Nothing distinguishes a filter that worked from one
+  that was dropped, so a caller who trusts the parameter reads a resolved
+  backlog as the live one. Filtering by state is therefore done client-side.
+- **Page size is fixed at 250.** `limit` and `page_size` are ignored the same
+  way. Narrowing has to happen after the fetch.
+- `sort` and `order` *are* honoured on `/issues/`, which is what lets
+  `survey_issues` stop paging early: ordered by `last_seen` descending, the
+  first issue outside the window ends the walk.
+- `/events/` **requires** `issue`; without it the answer is a `400`, not a list.
+  It returns newest-first and ignores `sort`/`order`.
+- An event's detail carries `stacktrace_md`, rendered by Bugsink with source
+  context — about 8 KB on a real event whose full payload was 51 KB, 30 KB of
+  which was breadcrumbs. `get_event` returns the summary plus that rendering by
+  default and takes `include` for the rest.
 
 ## Requirements
 
