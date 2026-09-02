@@ -1,0 +1,29 @@
+{
+  "name": "bugsink-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Bugsink — read and write",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "bugsink-mcp": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.23.8"
+  },
+  "license": "MIT",
+  "author": "Alfredo Costa",
+  "keywords": [
+    "mcp",
+    "bugsink",
+    "error-tracking",
+    "model-context-protocol",
+    "sentry-alternative"
+  ]
+}
