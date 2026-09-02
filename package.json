@@ -1,14 +1,18 @@
 {
   "name": "bugsink-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for Bugsink — read and write",
   "type": "module",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "bin": {
-    "bugsink-mcp": "src/index.js"
+    "bugsink-mcp": "dist/index.js"
   },
   "scripts": {
-    "start": "node src/index.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
   },
   "engines": {
     "node": ">=18"
@@ -25,5 +29,16 @@
     "error-tracking",
     "model-context-protocol",
     "sentry-alternative"
+  ],
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  },
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
   ]
 }

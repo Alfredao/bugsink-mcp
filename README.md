@@ -6,8 +6,18 @@ Bugsink's canonical API has always exposed resolve, mute and comment actions —
 existing MCP servers only wrap the read half, so an agent can look at an issue but
 never close it. This one covers both.
 
-Everything lives in one file, `src/index.js`. Adding a tool means copying
-`resolve_issue` and changing the path.
+TypeScript, strict. Adding a tool means copying `resolve_issue` in
+`src/tools/issues.ts` and changing the path.
+
+```
+src/
+  index.ts          bootstrap: env, server, transport
+  api.ts            BugsinkClient + BugsinkApiError
+  types.ts          Issue, Project, Paginated<T>, PeriodName
+  tools/
+    shared.ts       result helpers + the issue-reference schema
+    issues.ts       issue tools
+```
 
 ## Status
 
@@ -49,9 +59,12 @@ changes are recorded without a user.
 ## Run
 
 ```bash
-npm install
+npm install                 # also builds, via the prepare script
 BUGSINK_URL=https://bugsink.example.com BUGSINK_TOKEN=xxx npm start
 ```
+
+While developing, `npm run dev` runs the sources through `tsx` with no build step,
+and `npm run typecheck` is the type gate.
 
 ## Use with Claude Code
 
@@ -59,7 +72,7 @@ BUGSINK_URL=https://bugsink.example.com BUGSINK_TOKEN=xxx npm start
 claude mcp add bugsink \
   -e BUGSINK_URL=https://bugsink.example.com \
   -e BUGSINK_TOKEN=xxx \
-  -- node /path/to/bugsink-mcp/src/index.js
+  -- node /path/to/bugsink-mcp/dist/index.js
 ```
 
 Any MCP client works — it speaks stdio.
