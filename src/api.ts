@@ -1,4 +1,4 @@
-import type { Issue, IssueComment, Paginated, Project } from "./types.js";
+import type { EventDetail, EventSummary, Issue, IssueComment, Paginated, Project } from "./types.js";
 
 /** An error answer from Bugsink, carrying the status so callers can branch on it. */
 export class BugsinkApiError extends Error {
@@ -102,6 +102,23 @@ export class BugsinkClient {
     if (params.order) qs.set("order", params.order);
     if (params.cursor) qs.set("cursor", params.cursor);
     return this.request(`/issues/?${qs}`);
+  }
+
+  /**
+   * Events of one issue, newest first.
+   *
+   * The `issue` filter is REQUIRED by the API — asking for `/events/` without
+   * it is a 400, not an unfiltered list.
+   */
+  listEvents(params: { issue: string; cursor?: string }): Promise<Paginated<EventSummary>> {
+    const qs = new URLSearchParams({ issue: params.issue });
+    if (params.cursor) qs.set("cursor", params.cursor);
+    return this.request(`/events/?${qs}`);
+  }
+
+  /** One event with its payload. `id` is the Bugsink id, not the SDK `event_id`. */
+  getEvent(id: string): Promise<EventDetail> {
+    return this.request(`/events/${encodeURIComponent(id)}/`);
   }
 
   getIssue(issue: string): Promise<Issue> {

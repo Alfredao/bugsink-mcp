@@ -98,4 +98,25 @@ describe("BugsinkClient", () => {
       },
     );
   });
+
+  it("puts the required issue filter on the events query, which the API 400s without", async () => {
+    const { client: c, log } = client({ status: 200, body: '{"results":[]}' });
+    await c.listEvents({ issue: "PROJECT-914" });
+    assert.equal(log[0]?.url, "https://bugsink.test/api/canonical/0/events/?issue=PROJECT-914");
+  });
+
+  it("carries a cursor through to the next events page", async () => {
+    const { client: c, log } = client({ status: 200, body: '{"results":[]}' });
+    await c.listEvents({ issue: "PROJECT-914", cursor: "cD0x" });
+    assert.match(String(log[0]?.url), /issue=PROJECT-914&cursor=cD0x/);
+  });
+
+  it("reads one event by its Bugsink id", async () => {
+    const { client: c, log } = client({ status: 200, body: "{}" });
+    await c.getEvent("91b7eeab-4c68-42db-a965-46126dd98533");
+    assert.equal(
+      log[0]?.url,
+      "https://bugsink.test/api/canonical/0/events/91b7eeab-4c68-42db-a965-46126dd98533/",
+    );
+  });
 });
