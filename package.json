@@ -1,6 +1,6 @@
 {
   "name": "bugsink-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MCP server for Bugsink — read and write",
   "type": "module",
   "main": "dist/index.js",
@@ -11,7 +11,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepare": "npm run build"
   },
   "engines": {
