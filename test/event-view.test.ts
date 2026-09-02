@@ -48,7 +48,7 @@ describe("appFrames", () => {
 
   it("survives an event with no stacktrace at all", () => {
     const bare = event();
-    bare.data.exception = undefined;
+    delete bare.data.exception;
     assert.deepEqual(appFrames(bare), []);
   });
 });
@@ -92,7 +92,7 @@ describe("summarizeEvent", () => {
 
   it("falls back to the log message when there is no exception value", () => {
     const logged = event();
-    logged.data.exception = undefined;
+    delete logged.data.exception;
     logged.data.logentry = { formatted: "AI insight cache stale for business 94" };
     const summary = summarizeEvent(logged) as Record<string, unknown>;
     assert.equal(summary["value"], "AI insight cache stale for business 94");
