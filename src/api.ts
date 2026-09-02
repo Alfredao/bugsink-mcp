@@ -2,12 +2,40 @@ import type { Issue, Paginated, Project } from "./types.js";
 
 /** An error answer from Bugsink, carrying the status so callers can branch on it. */
 export class BugsinkApiError extends Error {
+  /** The `detail` string Bugsink puts on a refusal, when the body carries one. */
+  readonly detail: string;
+
   constructor(
     readonly status: number,
     readonly body: string,
   ) {
-    super(`Bugsink API ${status}: ${body}`);
+    const detail = BugsinkApiError.parseDetail(body);
+    super(`Bugsink API ${status}: ${detail}`);
     this.name = "BugsinkApiError";
+    this.detail = detail;
+  }
+
+  /**
+   * A refusal Bugsink returns because of the issue's CURRENT STATE — already
+   * resolved, not muted — rather than because the request was malformed or the
+   * caller lacks access. Input is validated by the tool schema before it gets
+   * here, so a 400 from these endpoints is a state refusal in practice.
+   */
+  get isStateRefusal(): boolean {
+    return this.status === 400;
+  }
+
+  private static parseDetail(body: string): string {
+    try {
+      const parsed: unknown = JSON.parse(body);
+      if (parsed && typeof parsed === "object" && "detail" in parsed) {
+        const { detail } = parsed as { detail: unknown };
+        if (typeof detail === "string") return detail;
+      }
+    } catch {
+      // Not JSON — fall through to the raw body.
+    }
+    return body;
   }
 }
 
