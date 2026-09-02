@@ -136,6 +136,12 @@ export async function surveyIssues(
     .slice(0, options.limit)
     .map(toRow);
 
+  const note = !complete
+    ? `Stopped at the ${options.maxPages}-page cap before reaching the end of the window — these are not all of them.`
+    : matched.length > rows.length
+      ? `${matched.length - rows.length} more issues matched than were returned; raise limit to see them.`
+      : undefined;
+
   return {
     window_days: options.days,
     state: options.state,
@@ -144,11 +150,7 @@ export async function surveyIssues(
     matched: matched.length,
     returned: rows.length,
     complete,
-    note: complete
-      ? matched.length > rows.length
-        ? `${matched.length - rows.length} more issues matched than were returned; raise limit to see them.`
-        : undefined
-      : `Stopped at the ${options.maxPages}-page cap before reaching the end of the window — these are not all of them.`,
+    ...(note === undefined ? {} : { note }),
     issues: rows,
   };
 }
